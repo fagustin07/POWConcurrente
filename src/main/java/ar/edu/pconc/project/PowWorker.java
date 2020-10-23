@@ -1,5 +1,6 @@
 package ar.edu.pconc.project;
 
+import javax.xml.bind.DatatypeConverter;
 import java.security.MessageDigest;
 import java.util.Arrays;
 
@@ -30,23 +31,19 @@ public class PowWorker extends Thread {
                 messageDigest.update(myByteArray);
                 byte[] digestedBytes = messageDigest.digest();
                 check(digestedBytes, difficult);
-            } catch (Exception ignored) {
-            }
-            ;
+            } catch (Exception ignored) { }
         }
-        System.out.println("F bro");
         isWorking = false;
     }
 
     public void check(byte[] digestedBytes, int difficult) {
-        boolean result = true;
+        StringBuilder zeros = new StringBuilder();
+        String hashValue = DatatypeConverter.printHexBinary(digestedBytes).toLowerCase();
         for (int i = 0; i < difficult; i++) {
-            result = digestedBytes[i] == 0;
-            if (!result)
-                break;
+            zeros.append("0");
         }
-        if (result) {
-            System.out.println("Lo encontre: " + Arrays.toString(digestedBytes));
+        if (hashValue.startsWith(zeros.toString())){
+            System.out.println("Lo encontré: " + hashValue);
             threadPool.stop();
         }
     }
