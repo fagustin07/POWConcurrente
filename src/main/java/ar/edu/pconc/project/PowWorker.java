@@ -1,41 +1,53 @@
-package org.example;
+package ar.edu.pconc.project;
 
-import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 
 public class PowWorker extends Thread {
-  private Buffer buffer;
-  private ThreadPool threadPool;
+    private final Buffer buffer;
+    private final ThreadPool threadPool;
+    private boolean isWorking = false;
 
-  public PowWorker(Buffer buffer, ThreadPool threadPool){
-    this.buffer = buffer;
-    this.threadPool = threadPool;
-  }
+    public PowWorker(Buffer buffer, ThreadPool threadPool) {
+        this.buffer = buffer;
+        this.threadPool = threadPool;
+    }
 
-  public void process(int dificult, int begin, int end, String text) {
-    
-    for (int i = begin; i <= end; i++){
-      try {
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        byte[] hash = digest.digest(text.getBytes(StandardCharsets.UTF_8));
-        this.checkIfIsNonce(dificult, hash);
-      } catch (NoSuchAlgorithmException e){};
+    public boolean isWorking() {
+        return isWorking;
     }
-  }
 
-  public void checkIfIsNonce(int dificultad, byte[] hash){
-    boolean loEncontro = true;
-    for (int i=0; i>dificultad;i++){
-      if(hash[i] != 0){
-        loEncontro= false;
-        break;
-      }
+    public void work(byte[] inputBytes, int difficult) {
+        isWorking = true;
+        UnidadDeTrabajo unidadDeTrabajo = (UnidadDeTrabajo) this.buffer.read();
+
+        for (int i = unidadDeTrabajo.start; i <= unidadDeTrabajo.end; i++) {
+            try {
+                MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+                byte[] myByteArray = new byte[inputBytes.length + 1];
+                myByteArray[0] = (byte) i;
+                System.arraycopy(inputBytes, 0, myByteArray, 1, inputBytes.length);
+                messageDigest.update(myByteArray);
+                byte[] digestedBytes = messageDigest.digest();
+                check(digestedBytes, difficult);
+            } catch (Exception ignored) {
+            }
+            ;
+        }
+        System.out.println("F bro");
+        isWorking = false;
     }
-    if(loEncontro){
-      System.out.println(hash);
-      threadPool.stop();
+
+    public void check(byte[] digestedBytes, int difficult) {
+        boolean result = true;
+        for (int i = 0; i < difficult; i++) {
+            result = digestedBytes[i] == 0;
+            if (!result)
+                break;
+        }
+        if (result) {
+            System.out.println("Lo encontre: " + Arrays.toString(digestedBytes));
+            threadPool.stop();
+        }
     }
-     
-  }
 }

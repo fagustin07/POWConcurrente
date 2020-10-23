@@ -1,4 +1,4 @@
-package org.example;
+package ar.edu.pconc.project;
 
 public class PoisonPill implements Runnable {
     @Override
