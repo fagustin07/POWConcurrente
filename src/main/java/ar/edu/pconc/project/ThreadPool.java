@@ -21,10 +21,12 @@ public class ThreadPool {
     }
 
     public synchronized void stop(){
-        for (PowWorker worker : this.workers) {
-            worker.stop();
+        for (PowWorker powWorker: this.workers){
+            powWorker.dejarDeTrabajar();
         }
+
         long endTime = System.currentTimeMillis() - startTime;
         System.out.println("Tiempo total del programa: " + endTime + " ms");
+        new PoisonPill().run();
     }
 }
