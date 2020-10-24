@@ -7,44 +7,50 @@ import java.util.Arrays;
 public class PowWorker extends Thread {
     private final Buffer buffer;
     private final ThreadPool threadPool;
-    private boolean isWorking = false;
+    private final int difficult;
+    private final byte[] inputBytes;
 
-    public PowWorker(Buffer buffer, ThreadPool threadPool) {
+    public PowWorker(Buffer buffer,ThreadPool threadPool, byte[] inputBytes, int difficult) {
         this.buffer = buffer;
         this.threadPool = threadPool;
+        this.inputBytes = inputBytes;
+        this.difficult = difficult;
     }
 
-    public boolean isWorking() {
-        return isWorking;
-    }
+    @Override
+    public void run() {
+        System.out.println("Pow worker trabajando");
+        while(true){
+            UnidadDeTrabajo unidadDeTrabajo = (UnidadDeTrabajo) this.buffer.read();
 
-    public void work(byte[] inputBytes, int difficult) {
-        isWorking = true;
-        UnidadDeTrabajo unidadDeTrabajo = (UnidadDeTrabajo) this.buffer.read();
+            for (int i = unidadDeTrabajo.start; i < unidadDeTrabajo.end; i++) {
+                try {
+                    MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+                    byte[] myByteArray = new byte[this.inputBytes.length + 1];
+                    myByteArray[myByteArray.length-1] = (byte) i;
+                    System.arraycopy(this.inputBytes, 0, myByteArray, 0, this.inputBytes.length);
+                    messageDigest.update(myByteArray);
+                    byte[] digestedBytes = messageDigest.digest();
+                    check(digestedBytes);
+                } catch (Exception e) {
+                    throw new RuntimeException(e.getMessage());
+                }
+            }
 
-        for (int i = unidadDeTrabajo.start; i <= unidadDeTrabajo.end; i++) {
-            try {
-                MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
-                byte[] myByteArray = new byte[inputBytes.length + 1];
-                myByteArray[0] = (byte) i;
-                System.arraycopy(inputBytes, 0, myByteArray, 1, inputBytes.length);
-                messageDigest.update(myByteArray);
-                byte[] digestedBytes = messageDigest.digest();
-                check(digestedBytes, difficult);
-            } catch (Exception ignored) { }
         }
-        isWorking = false;
     }
 
-    public void check(byte[] digestedBytes, int difficult) {
-        StringBuilder zeros = new StringBuilder();
-        String hashValue = DatatypeConverter.printHexBinary(digestedBytes).toLowerCase();
-        for (int i = 0; i < difficult; i++) {
-            zeros.append("0");
+    public void check(byte[] digestedBytes) {
+        boolean result = true;
+        for (int i = 0; i < this.difficult; i++) {
+            if (digestedBytes[i]!=0){
+                result = false;
+                break;
+            }
         }
-        if (hashValue.startsWith(zeros.toString())){
-            System.out.println("Lo encontré: " + hashValue);
-            threadPool.stop();
+        if (result){
+            System.out.println("Lo encontre: " + Arrays.toString(digestedBytes));
+            this.threadPool.stop();
         }
     }
 }

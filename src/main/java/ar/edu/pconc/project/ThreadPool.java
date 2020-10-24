@@ -1,30 +1,30 @@
 package ar.edu.pconc.project;
 
 public class ThreadPool {
-    private final PowWorker[] workers;
-    private int actualWorker;
     private final Buffer buffer;
-    private final byte[] inputByte;
-    public ThreadPool(Buffer buffer, int workersNumber, byte[] inputByte) {
-        this.buffer = buffer; 
-        this.workers = new PowWorker[workersNumber];
-        this.inputByte = inputByte;
+    private final PowWorker[] workers;
+    private final long startTime;
 
-        for (int i = 0; i < workersNumber; i++) {
-            workers[i] = new PowWorker(buffer,this);
-        }
-        this.actualWorker = 0;
+    public ThreadPool(Buffer buffer, int cantThreads, byte[] inputBytes, int difficult){
+        this.startTime = System.currentTimeMillis();
+        this.buffer = buffer;
+        workers = new PowWorker[cantThreads];
+        runThreads(inputBytes,difficult);
     }
 
-    public void launch(UnidadDeTrabajo nuevaUnidadDeTrabajo){
-        buffer.write(nuevaUnidadDeTrabajo);
-        while (workers[actualWorker].isWorking()){
-            actualWorker = (actualWorker+1) % workers.length;
+    private void runThreads(byte[] inputBytes, int difficult) {
+        for(int i = 0 ; i < this.workers.length ; i++){
+            PowWorker worker = new PowWorker(buffer,this,inputBytes,difficult);
+            workers[i] = worker;
+            worker.start();
         }
-        workers[actualWorker].work(inputByte,2);
     }
 
-    void stop(){
-        new Thread(new PoisonPill()).start();
+    public synchronized void stop(){
+        for (PowWorker worker : this.workers) {
+            worker.stop();
+        }
+        long endTime = System.currentTimeMillis() - startTime;
+        System.out.println("Tiempo total del programa: " + endTime + " ms");
     }
 }
