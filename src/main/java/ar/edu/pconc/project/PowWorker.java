@@ -9,6 +9,7 @@ public class PowWorker extends Thread {
     private final int difficult;
     private final byte[] inputBytes;
     private boolean tieneQueTrabajar = true;
+    private boolean encontroElNonce = false;
 
     public PowWorker(Buffer buffer, ThreadPool threadPool, byte[] inputBytes, int difficult) {
         this.buffer = buffer;
@@ -19,36 +20,47 @@ public class PowWorker extends Thread {
 
     @Override
     public void run() {
-        System.out.println("Pow worker trabajando");
         Object objetoLeido = this.buffer.read();
         UnidadDeTrabajo unidadDeTrabajo = (UnidadDeTrabajo) objetoLeido;
-        for (int i = unidadDeTrabajo.start; i < unidadDeTrabajo.end; i++) {
+        for (long i = unidadDeTrabajo.start; i < unidadDeTrabajo.end; i++) {
+            byte[] nonce = String.valueOf(i).getBytes();
+
+            byte[] miByteArray = generarByteArrayConNonce(nonce);
             if (!tieneQueTrabajar) break;
             try {
                 MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
-                byte[] myByteArray = new byte[this.inputBytes.length + 1];
-                myByteArray[myByteArray.length - 1] = (byte) i;
-                System.arraycopy(this.inputBytes, 0, myByteArray, 0, this.inputBytes.length);
-                messageDigest.update(myByteArray);
-                byte[] digestedBytes = messageDigest.digest();
-                check(digestedBytes);
+                byte[] digestedBytes = messageDigest.digest(miByteArray);
+                validarSiCumpleLaCondicion(digestedBytes, nonce);
             } catch (Exception e) {
                 throw new RuntimeException(e.getMessage());
             }
         }
+        if (!encontroElNonce)
+            threadPool.finalizo();
     }
 
-    public void check(byte[] digestedBytes) {
-        boolean result = true;
+    private byte[] generarByteArrayConNonce(byte[] nonce) {
+        byte[] miByteArray = new byte[inputBytes.length + nonce.length];
+
+        System.arraycopy(inputBytes, 0, miByteArray, 0, inputBytes.length);
+        System.arraycopy(nonce, 0, miByteArray, inputBytes.length, nonce.length);
+        return miByteArray;
+    }
+
+    public void validarSiCumpleLaCondicion(byte[] digestedBytes, byte[] nonce) {
+        boolean cumpleDificultad = true;
         for (int i = 0; i < this.difficult; i++) {
             if (digestedBytes[i] != 0) {
-                result = false;
+                cumpleDificultad = false;
                 break;
             }
         }
-        if (result){
-        System.out.println("Lo encontre: " + Arrays.toString(digestedBytes));
-        this.threadPool.stop();
+        this.encontroElNonce = cumpleDificultad;
+        if (encontroElNonce) {
+            String printVerde = "\u001B[32m";
+            System.out.println(printVerde + "[FOUND] " + Arrays.toString(digestedBytes));
+            System.out.println("[WITH]: " + Arrays.toString(nonce));
+            this.threadPool.stop();
         }
     }
 

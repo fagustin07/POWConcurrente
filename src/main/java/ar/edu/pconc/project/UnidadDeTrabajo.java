@@ -1,10 +1,10 @@
 package ar.edu.pconc.project;
 
 public class UnidadDeTrabajo {
-    public int start;
-    public int end;
+    public long start;
+    public long end;
 
-    public UnidadDeTrabajo(int start, int end){
+    public UnidadDeTrabajo(long start, long end){
         this.start = start;
         this.end = end;
     }

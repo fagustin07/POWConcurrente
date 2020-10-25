@@ -14,17 +14,22 @@ public class Main {
         String cadena = scan.nextLine();
 
         Buffer buffer = new Buffer(2);
-        new ThreadPool(buffer, threads,cadena.getBytes(),dificultad);
+        new ThreadPool(buffer, threads, cadena.getBytes(), dificultad);
 
-        int inicio = 0;
-        int limite = 32-threads+1;
-        for (int i = 0; i <threads; i++) {
-            UnidadDeTrabajo unidadDeTrabajo = new UnidadDeTrabajo(inicio,(int) Math.pow(2.0, limite)-1);
+        generarUnidadesDeTrabajo(threads, buffer);
+    }
+
+    private static void generarUnidadesDeTrabajo(int threads, Buffer buffer) {
+        long inicio = 0;
+        long limite = 32 - threads + 1;
+        for (int i = 0; i < threads; i++) {
+            UnidadDeTrabajo unidadDeTrabajo = new UnidadDeTrabajo(inicio, (long) Math.pow(2.0, limite));
+
             buffer.write(unidadDeTrabajo);
-            int limiteAnterior = limite;
-            inicio = (int) Math.pow(2.0, limite);
-            limite = limiteAnterior+1;
-        }
 
+            long limiteAnterior = limite;
+            inicio = (long) Math.pow(2.0, limite);
+            limite = limiteAnterior + 1;
+        }
     }
 }
