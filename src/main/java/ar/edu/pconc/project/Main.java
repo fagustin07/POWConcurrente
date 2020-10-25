@@ -15,21 +15,42 @@ public class Main {
 
         Buffer buffer = new Buffer(2);
         new ThreadPool(buffer, threads, cadena.getBytes(), dificultad);
-
-        generarUnidadesDeTrabajo(threads, buffer);
+        generarUnidadesDeTrabajo(buffer, threads);
     }
 
-    private static void generarUnidadesDeTrabajo(int threads, Buffer buffer) {
-        long inicio = 0;
-        long limite = 32 - threads + 1;
-        for (int i = 0; i < threads; i++) {
-            UnidadDeTrabajo unidadDeTrabajo = new UnidadDeTrabajo(inicio, (long) Math.pow(2.0, limite));
+    private static void generarUnidadesDeTrabajo(Buffer buffer, long threads) {
+        long nonceMaximo = (long) Math.pow(2.0, 32);
+        long inicioPorcion = 0;
+        long finalPorcion = nonceMaximo / threads;
 
-            buffer.write(unidadDeTrabajo);
+        long udtConMasUno = nonceMaximo % threads;
+        long finalDeLosQueTienenDeMas = 0;
 
-            long limiteAnterior = limite;
-            inicio = (long) Math.pow(2.0, limite);
-            limite = limiteAnterior + 1;
+        int i;
+        for (i = 1; i <= udtConMasUno; i++) {
+            agregarUnidadDeTrabajoSumandole(inicioPorcion, finalPorcion, buffer, 1);
+            inicioPorcion += finalPorcion + 1;
+            finalDeLosQueTienenDeMas = inicioPorcion;
+        }
+
+        inicioPorcion = finalDeLosQueTienenDeMas;
+
+        for (; i <= threads; i++) {
+            agregarUnidadDeTrabajoSumandole(inicioPorcion, finalPorcion, buffer, 0);
+            inicioPorcion += finalPorcion;
         }
     }
+
+    private static void agregarUnidadDeTrabajoSumandole(long inicioPorcion,
+                                                        long finalPorcion,
+                                                        Buffer buffer,
+                                                        int numeroASumar) {
+        UnidadDeTrabajo unidadDeTrabajo = new
+                UnidadDeTrabajo(
+                inicioPorcion,
+                inicioPorcion + finalPorcion + numeroASumar
+        );
+        buffer.write(unidadDeTrabajo);
+    }
 }
+
