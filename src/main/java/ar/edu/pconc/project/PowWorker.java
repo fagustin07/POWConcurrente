@@ -1,5 +1,6 @@
 package ar.edu.pconc.project;
 
+import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.util.Arrays;
 
@@ -23,8 +24,7 @@ public class PowWorker extends Thread {
         Object objetoLeido = this.buffer.read();
         UnidadDeTrabajo unidadDeTrabajo = (UnidadDeTrabajo) objetoLeido;
         for (long i = unidadDeTrabajo.start; i < unidadDeTrabajo.end; i++) {
-            byte[] nonce = String.valueOf(i).getBytes();
-
+            byte[] nonce = this.generarNonce(i);
             byte[] miByteArray = generarByteArrayConNonce(nonce);
             if (!tieneQueTrabajar) break;
             try {
@@ -37,6 +37,24 @@ public class PowWorker extends Thread {
         }
         if (!encontroElNonce)
             threadPool.finalizo();
+    }
+
+    private byte[] generarNonce(long aNumber) {
+        byte[] nonce;
+        byte[] byteArray = BigInteger.valueOf(aNumber).toByteArray();
+        if (byteArray.length == 5) {
+            nonce = Arrays.copyOfRange(byteArray, 1, 5);
+        } else {
+            nonce = byteArray;
+            byte[] newNonce = new byte[4];
+            int posicion = 3;
+            for (byte b : nonce) {
+                newNonce[posicion] = b;
+                posicion--;
+            }
+            nonce = newNonce;
+        }
+        return nonce;
     }
 
     private byte[] generarByteArrayConNonce(byte[] nonce) {
@@ -58,8 +76,10 @@ public class PowWorker extends Thread {
         this.encontroElNonce = cumpleDificultad;
         if (encontroElNonce) {
             String printVerde = "\u001B[32m";
-            System.out.println(printVerde + "[FOUND] " + Arrays.toString(digestedBytes));
-            System.out.println("[WITH]: " + Arrays.toString(nonce));
+            System.out.println(printVerde +
+                    "[FOUND]: " + Arrays.toString(digestedBytes)+ "\n" +
+                    "[WITH] : " + Arrays.toString(nonce));
+            System.out.println();
             this.threadPool.stop();
         }
     }

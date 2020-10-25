@@ -15,15 +15,15 @@ public class Main {
 
         Buffer buffer = new Buffer(2);
         new ThreadPool(buffer, threads, cadena.getBytes(), dificultad);
+
         generarUnidadesDeTrabajo(buffer, threads);
     }
 
     private static void generarUnidadesDeTrabajo(Buffer buffer, long threads) {
-        long nonceMaximo = (long) Math.pow(2.0, 32);
+        long capDe4Bytes = (long) Math.pow(2.0, 32);
         long inicioPorcion = 0;
-        long finalPorcion = nonceMaximo / threads;
-
-        long udtConMasUno = nonceMaximo % threads;
+        long finalPorcion = capDe4Bytes / threads;
+        long udtConMasUno = capDe4Bytes % threads;
         long finalDeLosQueTienenDeMas = 0;
 
         int i;
