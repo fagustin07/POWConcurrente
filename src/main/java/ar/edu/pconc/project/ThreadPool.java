@@ -32,7 +32,7 @@ public class ThreadPool {
         System.out.println("Tiempo total de busqueda: " + endTime + " ms");
     }
 
-    public void finalizo() {
+    public synchronized void finalizo() {
         finalizados++;
         if (finalizados == workers.length) {
             String printRojo = "\u001B[31m";
